@@ -146,6 +146,7 @@ async def create_snapshot(dep=Depends(api_key_auth)) -> Dict[str, Any]:
             content={"status": "error", "detail": f"Unexpected error: {str(e)}"}
         )
 
+
 if __name__ == "__main__":
     logger.info("Starting up stockflow controller server")
     uvicorn.run("stockflow_controller:stockflow_controller", host="0.0.0.0", port=9000, log_level="info")
