@@ -7,6 +7,8 @@ except config.ConfigException:
     config.load_kube_config()
 
 v1_core = client.CoreV1Api()
+v1_apps = client.AppsV1Api()
+v1_batch = client.BatchV1Api()
 
 # Return list of namespaces
 def get_namespaces():
@@ -26,13 +28,35 @@ def get_pods(namespace):
     return pod_name_array
 
 # Return list of deployments
-
+def get_deployments(namespace):
+    deploy_list = v1_apps.list_namespaced_deployment(namespace).items
+    deploy_name_array = []
+    for deploy in deploy_list:
+        deploy_name_array.append(deploy.metadata.name)
+    return deploy_name_array
 
 # Return list of configmaps
+def get_configmaps(namespace):
+    cm_list = v1_core.list_namespaced_config_map(namespace).items
+    cm_name_array = []
+    for cm in cm_list:
+        cm_name_array.append(cm.metadata.name)
+    return cm_name_array
 
 # Return list of jobs
+def get_jobs(namespace):
+    job_list = v1_batch.list_namespaced_job(namespace).items
+    job_name_array = []
+    for job in job_list:
+        job_name_array.append(job.metadata.name)
+    return job_name_array
 
-
+def get_cronjobs(namespace):
+    cronjob_list = v1_batch.list_namespaced_cron_job(namespace).items
+    cronjob_name_array = []
+    for cronjob in cronjob_list:
+        cronjob_name_array.append(cronjob.metadata.name)
+    return cronjob_name_array
 
 def create_snapshot(namespace: str):
     return
