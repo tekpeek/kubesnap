@@ -18,8 +18,15 @@ def get_namespaces():
     return namespaces_list
 
 # Return list of pods
+def get_pods(namespace):
+    pod_list = v1_core.list_namespaced_pod(namespace).items
+    pod_name_array = []
+    for pod in pod_list:
+        pod_name_array.append(pod.metadata.name)
+    return pod_name_array
 
 # Return list of deployments
+
 
 # Return list of configmaps
 
