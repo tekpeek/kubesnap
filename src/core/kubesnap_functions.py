@@ -1,6 +1,7 @@
 from kubernetes import client, config
 import json
 import tempfile
+import subprocess
 
 try:
     config.load_incluster_config()
@@ -19,6 +20,12 @@ def fetch_resource_list(api,namespace):
     return resource_name_array
 
 def fetch_logs(namespace,pod_list,temp_file_path):
+    try:
+        subprocess.run(["mkdir","-p",f"{temp_file_path}/pod_logs"])
+    except Exception as e:
+        print(f"Error creating directory {temp_file_path}/pod_logs: {e}")
+        exit(1)
+    temp_file_path = temp_file_path + "/pod_logs"
     for pod in pod_list:
         logs = v1_core.read_namespaced_pod_log(pod,namespace)
         with open(f"{temp_file_path}/{pod}.log","w") as file:
@@ -26,13 +33,12 @@ def fetch_logs(namespace,pod_list,temp_file_path):
             print(f"File Created {temp_file_path}/{pod}.log")
 
 # Return list of namespaces
-def get_namespaces():
+def namespace_exists(namespace):
     namespaces_raw=v1_core.list_namespace(_preload_content=False).json()
     namespaces_list=[]
     for namespace_element in namespaces_raw['items']:
         namespaces_list.append(namespace_element['metadata']['name'])
-
-    return namespaces_list
+    return namespace in namespaces_list
 
 # Return list of pods
 def get_pods(namespace):
@@ -49,7 +55,13 @@ def get_pods(namespace):
 def get_deployments(namespace):
     deploy_list = v1_apps.list_namespaced_deployment(namespace).items
     deploy_name_array = []
+
     for deploy in deploy_list:
+        deploy = v1_apps.read_namespaced_deployment("signal-engine",namespace)
+        print(deploy)
+        with open("test.txt","w") as file:
+            file.write(str(deploy))
+        return
         deploy_name_array.append(deploy.metadata.name)
     return deploy_name_array
 
@@ -77,12 +89,15 @@ def get_cronjobs(namespace):
     return cronjob_name_array
 
 def create_snapshot(namespace: str):
+    if not namespace_exists(namespace):
+        exit(f"Namespace {namespace} does not exist!")
     temp_file = tempfile.TemporaryDirectory()
     temp_file_path = temp_file.name
-    pod_list = get_pods("default")
-    fetch_logs("default",pod_list,temp_file_path)
+    pod_list = get_pods(namespace)
+    fetch_logs(namespace,pod_list,temp_file_path)
     print(temp_file_path)
     temp_file.cleanup()
     return
 
-create_snapshot("default")
+get_deployments("default")
+#create_snapshot("default")
