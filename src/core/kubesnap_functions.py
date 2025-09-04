@@ -52,18 +52,20 @@ def get_pods(namespace):
 #print(get_pods("default"))
 #fetch_logs("default",get_pods("default"))
 # Return list of deployments
-def get_deployments(namespace):
-    deploy_list = v1_apps.list_namespaced_deployment(namespace).items
-    deploy_name_array = []
-
+def get_deployments(temp_file_path,namespace):
+    try:
+        subprocess.run(["mkdir","-p",f"{temp_file_path}/deployments"])
+    except Exception as e:
+        print(f"Error creating directory {temp_file_path}/deployments: {e}")
+        exit(1)
+    temp_file_path = temp_file_path + "/deployments"
+    deploy_list = fetch_resource_list(v1_apps.list_namespaced_deployment,namespace)
     for deploy in deploy_list:
-        deploy = v1_apps.read_namespaced_deployment("signal-engine",namespace)
-        print(deploy)
-        with open("test.txt","w") as file:
-            file.write(str(deploy))
-        return
-        deploy_name_array.append(deploy.metadata.name)
-    return deploy_name_array
+        deploy_config = v1_apps.read_namespaced_deployment(deploy,namespace)
+        with open(f"{temp_file_path}/{deploy}.dep.txt","w") as file:
+            file.write(str(deploy_config.to_dict()))
+        print(f"File Created {temp_file_path}/{deploy}.log")
+    return
 
 # Return list of configmaps
 def get_configmaps(namespace):
@@ -95,9 +97,10 @@ def create_snapshot(namespace: str):
     temp_file_path = temp_file.name
     pod_list = get_pods(namespace)
     fetch_logs(namespace,pod_list,temp_file_path)
+    get_deployments(temp_file_path,namespace)
     print(temp_file_path)
     temp_file.cleanup()
     return
 
-get_deployments("default")
-#create_snapshot("default")
+
+create_snapshot("default")
