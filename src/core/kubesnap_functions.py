@@ -49,9 +49,6 @@ def get_pods(namespace):
         pod_name_array.append(pod.metadata.name)
     return pod_name_array
 
-#print(get_pods("default"))
-#fetch_logs("default",get_pods("default"))
-# Return list of deployments
 def get_deployments(temp_file_path,namespace):
     try:
         subprocess.run(["mkdir","-p",f"{temp_file_path}/deployments"])
@@ -68,27 +65,51 @@ def get_deployments(temp_file_path,namespace):
     return
 
 # Return list of configmaps
-def get_configmaps(namespace):
-    cm_list = v1_core.list_namespaced_config_map(namespace).items
+def get_configmaps(temp_file_path,namespace):
+    try:
+        subprocess.run(["mkdir","-p",f"{temp_file_path}/configmaps"])
+    except Exception as e:
+        print(f"Error creating directory {temp_file_path}/configmaps: {e}")
+        exit(1)
+    temp_file_path = temp_file_path + "/configmaps"
+    cm_list = fetch_resource_list(v1_core.list_namespaced_config_map,namespace)
     cm_name_array = []
     for cm in cm_list:
+        v = v1_core.read_namespaced_config_map(cm.metadata.name,namespace)
+        return
         cm_name_array.append(cm.metadata.name)
     return cm_name_array
 
 # Return list of jobs
-def get_jobs(namespace):
-    job_list = v1_batch.list_namespaced_job(namespace).items
-    job_name_array = []
+def get_jobs(temp_file_path,namespace):
+    try:
+        subprocess.run(["mkdir","-p",f"{temp_file_path}/jobs"])
+    except Exception as e:
+        print(f"Error creating directory {temp_file_path}/jobs: {e}")
+        exit(1)
+    temp_file_path = temp_file_path + "/jobs"
+    job_list =  fetch_resource_list(v1_batch.list_namespaced_job,namespace)
     for job in job_list:
-        job_name_array.append(job.metadata.name)
-    return job_name_array
+        job_config = v1_batch.read_namespaced_job(job,namespace)
+        with open(f"{temp_file_path}/{job}.job.txt","w") as file:
+            file.write(str(job_config.to_dict()))
+        print(f"File Created {temp_file_path}/{job}.log")
+    return
 
-def get_cronjobs(namespace):
-    cronjob_list = v1_batch.list_namespaced_cron_job(namespace).items
-    cronjob_name_array = []
+def get_cronjobs(temp_file_path,namespace):
+    cronjob_list =  fetch_resource_list(v1_batch.list_namespaced_cron_job,namespace)
+    try:
+        subprocess.run(["mkdir","-p",f"{temp_file_path}/cronjobs"])
+    except Exception as e:
+        print(f"Error creating directory {temp_file_path}/cronjobs: {e}")
+        exit(1)
+    temp_file_path = temp_file_path + "/cronjobs"
     for cronjob in cronjob_list:
-        cronjob_name_array.append(cronjob.metadata.name)
-    return cronjob_name_array
+        cronjob_config = v1_batch.read_namespaced_cron_job(cronjob,namespace)
+        with open(f"{temp_file_path}/{cronjob}.cronjob.txt","w") as file:
+            file.write(str(cronjob_config.to_dict()))
+        print(f"File Created {temp_file_path}/{cronjob}.log")
+    return
 
 def create_snapshot(namespace: str):
     if not namespace_exists(namespace):
@@ -98,6 +119,9 @@ def create_snapshot(namespace: str):
     pod_list = get_pods(namespace)
     fetch_logs(namespace,pod_list,temp_file_path)
     get_deployments(temp_file_path,namespace)
+    get_jobs(temp_file_path,namespace)
+    get_cronjobs(temp_file_path,namespace)
+    get_configmaps(namespace)
     print(temp_file_path)
     temp_file.cleanup()
     return
