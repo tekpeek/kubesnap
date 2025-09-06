@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     jq \
     curl \
+    zip \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -16,6 +17,8 @@ ENV PYTHONUNBUFFERED=1
 
 RUN pip install fastapi uvicorn pandas kubernetes
 
-COPY src/api/stockflow_controller.py /app/stockflow_controller.py
+COPY src/api/kubesnap.py /app/kubesnap.py
 
-CMD ["python3","stockflow_controller.py"]
+COPY src/core/kubesnap_functions.py /app/kubesnap_functions.py
+
+CMD ["python3","kubesnap.py"]

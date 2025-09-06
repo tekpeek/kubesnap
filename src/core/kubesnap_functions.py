@@ -43,7 +43,7 @@ def create_sub_dir(temp_file_path,sub_path):
         subprocess.run(["mkdir","-p",f"{temp_file_path}/{sub_path}"])
     except Exception as e:
         logger.error(f"Error creating directory {temp_file_path}/{sub_path}: {e}")
-        exit(1)
+        raise RuntimeError(f"Error creating directory {temp_file_path}/{sub_path}: {e}")
 
 def loop_and_store(element_list,fetch_api,namespace,file_suffix,temp_file_path):
     try:
@@ -110,7 +110,8 @@ def get_cronjobs(temp_file_path,namespace):
 
 def create_snapshot(namespace: str):
     if not namespace_exists(namespace):
-        exit(f"Namespace {namespace} does not exist!")
+        logger.error(f"Namespace {namespace} does not exist!")
+        raise RuntimeError(f"Namespace {namespace} does not exist!")
     temp_file = tempfile.TemporaryDirectory()
     temp_file_path = temp_file.name
     fetch_logs(namespace,temp_file_path)
@@ -122,7 +123,6 @@ def create_snapshot(namespace: str):
     logger.info(f"Temp Folder Path : temp_file_path")
     logger.info(f"ZIP File Created : {zip_file}")  
     temp_file.cleanup()
-    return
+    return zip_file
 
-
-create_snapshot("default")
+#create_snapshot("default")
