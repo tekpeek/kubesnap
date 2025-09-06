@@ -2,6 +2,24 @@ from kubernetes import client, config
 import json
 import tempfile
 import subprocess
+import logging
+import zipfile
+import datetime
+
+def get_logger(name: str, level=logging.INFO) -> logging.Logger:
+    """Return a configured logger with console output."""
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+                "%Y-%m-%d %H:%M:%S"
+            )
+        )
+        logger.addHandler(handler)
+    return logger
 
 try:
     config.load_incluster_config()
@@ -11,6 +29,7 @@ except config.ConfigException:
 v1_core = client.CoreV1Api()
 v1_apps = client.AppsV1Api()
 v1_batch = client.BatchV1Api()
+logger = get_logger("kubesnap_functions",logging.INFO)
 
 def fetch_resource_list(api,namespace):
     resource_list = api(namespace).items
@@ -19,18 +38,41 @@ def fetch_resource_list(api,namespace):
         resource_name_array.append(resource.metadata.name)
     return resource_name_array
 
-def fetch_logs(namespace,pod_list,temp_file_path):
+def create_sub_dir(temp_file_path,sub_path):
     try:
-        subprocess.run(["mkdir","-p",f"{temp_file_path}/pod_logs"])
+        subprocess.run(["mkdir","-p",f"{temp_file_path}/{sub_path}"])
     except Exception as e:
-        print(f"Error creating directory {temp_file_path}/pod_logs: {e}")
+        logger.error(f"Error creating directory {temp_file_path}/{sub_path}: {e}")
         exit(1)
+
+def loop_and_store(element_list,fetch_api,namespace,file_suffix,temp_file_path):
+    try:
+        for element in element_list:
+            config = fetch_api(element,namespace)
+            with open(f"{temp_file_path}/{element}.{file_suffix}.txt","w") as file:
+                file.write(str(config))
+            logger.info(f"File Created {temp_file_path}/{element}.{file_suffix}.txt")
+        return
+    except Exception as e:
+        logger.error(f"Error while creating files for {file_suffix} suffix - api - {fetch_api}")
+
+def zip_files(temp_file_path):
+    try:
+        timestamp = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = str(timestamp).replace(" ","_")
+        timestamp = str(timestamp).replace("\\","_")
+        timestamp = str(timestamp).replace("-","_")
+        subprocess.run(["zip",f"kubesnap_{timestamp}.zip","-r",f"{temp_file_path}"])
+    except Exception as e:
+        logger.error(f"Error while creating zip file from folder {temp_file_path}")
+    return f"kubesnap_{timestamp}.zip"
+
+
+def fetch_logs(namespace,temp_file_path):
+    pod_list = fetch_resource_list(v1_core.list_namespaced_pod,namespace)
+    create_sub_dir(temp_file_path,"pod_logs")
     temp_file_path = temp_file_path + "/pod_logs"
-    for pod in pod_list:
-        logs = v1_core.read_namespaced_pod_log(pod,namespace)
-        with open(f"{temp_file_path}/{pod}.log","w") as file:
-            file.write(logs)
-            print(f"File Created {temp_file_path}/{pod}.log")
+    loop_and_store(pod_list,v1_core.read_namespaced_pod_log,namespace,"log",temp_file_path)
 
 # Return list of namespaces
 def namespace_exists(namespace):
@@ -40,89 +82,45 @@ def namespace_exists(namespace):
         namespaces_list.append(namespace_element['metadata']['name'])
     return namespace in namespaces_list
 
-# Return list of pods
-def get_pods(namespace):
-    return fetch_resource_list(v1_core.list_namespaced_pod,namespace)
-    pod_list = v1_core.list_namespaced_pod(namespace).items
-    pod_name_array = []
-    for pod in pod_list:
-        pod_name_array.append(pod.metadata.name)
-    return pod_name_array
-
 def get_deployments(temp_file_path,namespace):
-    try:
-        subprocess.run(["mkdir","-p",f"{temp_file_path}/deployments"])
-    except Exception as e:
-        print(f"Error creating directory {temp_file_path}/deployments: {e}")
-        exit(1)
+    create_sub_dir(temp_file_path,"deployments")
     temp_file_path = temp_file_path + "/deployments"
     deploy_list = fetch_resource_list(v1_apps.list_namespaced_deployment,namespace)
-    for deploy in deploy_list:
-        deploy_config = v1_apps.read_namespaced_deployment(deploy,namespace)
-        with open(f"{temp_file_path}/{deploy}.dep.txt","w") as file:
-            file.write(str(deploy_config.to_dict()))
-        print(f"File Created {temp_file_path}/{deploy}.log")
-    return
+    loop_and_store(deploy_list,v1_apps.read_namespaced_deployment,namespace,"dep",temp_file_path)
 
 # Return list of configmaps
 def get_configmaps(temp_file_path,namespace):
-    try:
-        subprocess.run(["mkdir","-p",f"{temp_file_path}/configmaps"])
-    except Exception as e:
-        print(f"Error creating directory {temp_file_path}/configmaps: {e}")
-        exit(1)
+    create_sub_dir(temp_file_path,"configmaps")
     temp_file_path = temp_file_path + "/configmaps"
     cm_list = fetch_resource_list(v1_core.list_namespaced_config_map,namespace)
-    cm_name_array = []
-    for cm in cm_list:
-        v = v1_core.read_namespaced_config_map(cm.metadata.name,namespace)
-        return
-        cm_name_array.append(cm.metadata.name)
-    return cm_name_array
+    loop_and_store(cm_list,v1_core.read_namespaced_config_map,namespace,"cm",temp_file_path)
 
 # Return list of jobs
 def get_jobs(temp_file_path,namespace):
-    try:
-        subprocess.run(["mkdir","-p",f"{temp_file_path}/jobs"])
-    except Exception as e:
-        print(f"Error creating directory {temp_file_path}/jobs: {e}")
-        exit(1)
+    create_sub_dir(temp_file_path,"jobs")
     temp_file_path = temp_file_path + "/jobs"
     job_list =  fetch_resource_list(v1_batch.list_namespaced_job,namespace)
-    for job in job_list:
-        job_config = v1_batch.read_namespaced_job(job,namespace)
-        with open(f"{temp_file_path}/{job}.job.txt","w") as file:
-            file.write(str(job_config.to_dict()))
-        print(f"File Created {temp_file_path}/{job}.log")
-    return
+    loop_and_store(job_list,v1_batch.read_namespaced_job,namespace,"job",temp_file_path)
 
 def get_cronjobs(temp_file_path,namespace):
-    cronjob_list =  fetch_resource_list(v1_batch.list_namespaced_cron_job,namespace)
-    try:
-        subprocess.run(["mkdir","-p",f"{temp_file_path}/cronjobs"])
-    except Exception as e:
-        print(f"Error creating directory {temp_file_path}/cronjobs: {e}")
-        exit(1)
+    create_sub_dir(temp_file_path,"cronjobs")
     temp_file_path = temp_file_path + "/cronjobs"
-    for cronjob in cronjob_list:
-        cronjob_config = v1_batch.read_namespaced_cron_job(cronjob,namespace)
-        with open(f"{temp_file_path}/{cronjob}.cronjob.txt","w") as file:
-            file.write(str(cronjob_config.to_dict()))
-        print(f"File Created {temp_file_path}/{cronjob}.log")
-    return
+    cronjob_list =  fetch_resource_list(v1_batch.list_namespaced_cron_job,namespace)
+    loop_and_store(cronjob_list,v1_batch.read_namespaced_cron_job,namespace,"cronjob",temp_file_path)
 
 def create_snapshot(namespace: str):
     if not namespace_exists(namespace):
         exit(f"Namespace {namespace} does not exist!")
     temp_file = tempfile.TemporaryDirectory()
     temp_file_path = temp_file.name
-    pod_list = get_pods(namespace)
-    fetch_logs(namespace,pod_list,temp_file_path)
+    fetch_logs(namespace,temp_file_path)
     get_deployments(temp_file_path,namespace)
     get_jobs(temp_file_path,namespace)
     get_cronjobs(temp_file_path,namespace)
-    get_configmaps(namespace)
-    print(temp_file_path)
+    get_configmaps(temp_file_path,namespace)
+    zip_file = zip_files(temp_file_path)
+    logger.info(f"Temp Folder Path : temp_file_path")
+    logger.info(f"ZIP File Created : {zip_file}")  
     temp_file.cleanup()
     return
 
