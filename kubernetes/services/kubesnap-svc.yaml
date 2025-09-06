@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubesnap-service
+spec:
+  type : ClusterIP
+  selector:
+    app: kubesnap
+  ports:
+  - name: ks-svc-port
+    protocol: TCP
+    port: 9001
+    targetPort: ks-port

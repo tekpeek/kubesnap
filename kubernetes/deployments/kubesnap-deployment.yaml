@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: kubesnap
+    labels:
+      app: kubesnap
+spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: kubesnap
+    template:
+      metadata:
+        labels:
+          app: kubesnap
+      spec:
+        serviceAccountName: kubesnap-svc-acc
+        containers:
+        - name: kubesnap
+          image: kingaiva/kubesnap:dev
+          env:
+            - name: SF_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-credentials
+                  key: api-key
+            - name: PORT
+              value: "9001"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9001
+              name: ks-port

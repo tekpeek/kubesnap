@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubesnap-ingress
+  namespace: dev
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.tls.certresolver: default
+spec:
+  rules:
+    - host: tekpeek.duckdns.org
+      http:
+        paths:
+          - path: /api/kubesnap
+            pathType: Prefix
+            backend:
+              service:
+                name: kubesnap-service
+                port:
+                  number: 9001
+  tls:
+    - hosts:
+        - tekpeek.duckdns.org

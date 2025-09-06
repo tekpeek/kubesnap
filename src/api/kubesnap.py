@@ -88,4 +88,4 @@ async def create_snapshot_api(#dep=Depends(api_key_auth)
 
 if __name__ == "__main__":
     logger.info("Starting up kubesnap server")
-    uvicorn.run("kubesnap:kubesnap", host="0.0.0.0", port=9000, log_level="info")
+    uvicorn.run("kubesnap:kubesnap", host="0.0.0.0", port=9001, log_level="info")
