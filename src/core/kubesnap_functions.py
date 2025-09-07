@@ -108,7 +108,19 @@ def get_cronjobs(temp_file_path,namespace):
     cronjob_list =  fetch_resource_list(v1_batch.list_namespaced_cron_job,namespace)
     loop_and_store(cronjob_list,v1_batch.read_namespaced_cron_job,namespace,"cronjob",temp_file_path)
 
-def create_snapshot(namespace: str):
+def push_to_bucket(upload_url,filename):
+    try:
+        result = subprocess.run(["curl","-s","-X","PUT","-H","Content-Type: application/json","-w","%{http_code}\n",f"{upload_url}{filename}","-d",f'@{filename}'], capture_output=True, text=True)
+        if "200" in str(result.stdout):
+            logger.info(f"file successfully pushed to objectstore {filename}")
+            return "success"
+        else:
+            logger.error(f"error uploading file {filename}")
+            return "failed"
+    except Exception as e:
+        logger.error("Error while running file upload command")
+
+def create_snapshot(namespace: str,upload_url):
     if not namespace_exists(namespace):
         logger.error(f"Namespace {namespace} does not exist!")
         raise RuntimeError(f"Namespace {namespace} does not exist!")
@@ -121,8 +133,10 @@ def create_snapshot(namespace: str):
     get_configmaps(temp_file_path,namespace)
     zip_file = zip_files(temp_file_path)
     logger.info(f"Temp Folder Path : temp_file_path")
-    logger.info(f"ZIP File Created : {zip_file}")  
+    logger.info(f"ZIP File Created : {zip_file}")
+    result = push_to_bucket(upload_url,zip_file)  
     temp_file.cleanup()
-    return zip_file
+    return [zip_file,result]
 
+#print(push_to_bucket(upload_url,"kubesnap_functions.py"))
 #create_snapshot("default")

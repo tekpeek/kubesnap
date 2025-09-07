@@ -30,7 +30,7 @@ except config.ConfigException:
 #v1_core = client.CoreV1Api()
 #v1_core_apps = client.AppsV1Api()
 kubesnap = FastAPI()
-
+OBJECT_STORE_REQ = str(os.getenv("OBJECT_STORE_REQ"))
 # Add CORS middleware
 kubesnap.add_middleware(
     CORSMiddleware,
@@ -60,15 +60,15 @@ async def create_snapshot_api(#dep=Depends(api_key_auth)
     try:
         time_string = str(time.time())
         logger.info(f"Triggering Snapshot creation on request at {time_string}")
-        zip_file = create_snapshot(namespace)
+        [zip_file,result] = create_snapshot(namespace,OBJECT_STORE_REQ)
         logger.info(f"Snapshot created successfully : {zip_file}")
         return JSONResponse(
             status_code=200,
             content={
-                "status": "success",
-                "message": "Snapshot successfully",
+                "snapshot_status": "success",
                 "file_name": zip_file,
-                "timestamp": time_string
+                "timestamp": time_string,
+                "upload_status": result
             }
         )
         

@@ -18,5 +18,6 @@
        - name: deploy-microservice
          env:
            SF_API_KEY: ${{ secrets.SF_API_KEY }}
+           OBJECT_STORE_REQ: ${{ secrets.OBJECT_STORE_REQ }}
          run: |
            bash deploy_project.sh

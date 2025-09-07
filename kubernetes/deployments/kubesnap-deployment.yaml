@@ -24,6 +24,11 @@ spec:
                 secretKeyRef:
                   name: api-credentials
                   key: api-key
+            - name: OBJECT_STORE_REQ
+              valueFrom:
+                secretKeyRef:
+                  name: objectstore-auth
+                  key: OBJECT_STORE_REQ
             - name: PORT
               value: "9001"
           imagePullPolicy: Always

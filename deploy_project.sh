@@ -43,6 +43,12 @@ check_deployment() {
     fi
 }
 
+if [[ ! -z "${OBJECT_STORE_REQ}" ]]; then
+    kubectl -n "${NAMESPACE}" delete secret objectstore-auth --ignore-not-found
+    kubectl -n "${NAMESPACE}" create secret generic objectstore-auth \
+        --from-literal=OBJECT_STORE_REQ="${OBJECT_STORE_REQ}"
+fi
+
 # Delete the old service and deploy the signal engine service
 kubectl -n "${NAMESPACE}" delete service kubesnap-service --ignore-not-found
 kubectl -n "${NAMESPACE}" apply -f kubernetes/services/kubesnap-svc.yaml
