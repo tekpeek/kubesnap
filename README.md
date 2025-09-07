@@ -28,6 +28,7 @@ It integrates smoothly with Kubernetes clusters and can be deployed as a contain
 
 ## 📂 Project Structure  
 
+```
 kubesnap/
 ├── deploy_project.sh           # Deployment helper script
 ├── dockerfiles/
@@ -50,7 +51,7 @@ kubesnap/
 └── .github/workflows/
     ├── build.yml                   # CI build workflow
     └── deploy.yml                  # CD deployment workflow
-
+```
 
 # Installation
 
