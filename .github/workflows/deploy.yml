@@ -1,0 +1,22 @@
+---
+    name: deploy
+    on:
+      workflow_dispatch:
+      workflow_run:
+        workflows:
+          - build-image-and-push
+        types:
+          - completed
+    jobs:
+     build:
+       name: deploy
+       runs-on: self-hosted
+       steps:
+       - name: Checkout
+         uses: actions/checkout@v2
+     
+       - name: deploy-microservice
+         env:
+           SF_API_KEY: ${{ secrets.SF_API_KEY }}
+         run: |
+           bash deploy_project.sh
