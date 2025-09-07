@@ -4,7 +4,7 @@ metadata:
   name: kubesnap-role
 rules:
   - apiGroups: [""]
-    resources: ["pods", "services","namespaces"]
+    resources: ["pods","services","namespaces","pods/log"]
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["configmaps"]
