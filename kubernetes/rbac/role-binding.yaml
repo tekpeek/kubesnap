@@ -9,4 +9,4 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: kubesnap-svc-acc
-    namespace: dev
+    namespace: kubesnap
