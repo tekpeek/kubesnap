@@ -1,6 +1,6 @@
 # kubesnap  
 
-> Take consistent Kubernetes snapshots of cluster resources and push them to object storage.  
+Take consistent Kubernetes snapshots of cluster resources and push them to object storage.  
 
 [![Build](https://github.com/tekpeek/kubesnap/actions/workflows/build.yml/badge.svg)](./.github/workflows/build.yml)  
 [![Deploy](https://github.com/tekpeek/kubesnap/actions/workflows/deploy.yml/badge.svg)](./.github/workflows/deploy.yml)  
@@ -29,31 +29,28 @@ It integrates smoothly with Kubernetes clusters and can be deployed as a contain
 ## 📂 Project Structure  
 
 kubesnap/
-
-├── deploy_project.sh # Deployment helper script
-
+├── deploy_project.sh           # Deployment helper script
 ├── dockerfiles/
-
-│ └── Dockerfile.kubesnap # Container build file
-
+│   └── Dockerfile.kubesnap    # Container build file
 ├── kubernetes/
-│ ├── deployments/
-│ │ └── kubesnap-deployment.yaml
-│ ├── rbac/
-│ │ ├── kubesnap-svc-acc.yaml
-│ │ ├── role-binding.yaml
-│ │ └── svc-acc-cluster-role.yaml
-│ └── services/
-│ ├── kubesnap-svc.yaml
-│ └── kubesnap-ingress.yaml
+│   ├── deployments/
+│   │   └── kubesnap-deployment.yaml
+│   ├── rbac/
+│   │   ├── kubesnap-svc-acc.yaml
+│   │   ├── role-binding.yaml
+│   │   └── svc-acc-cluster-role.yaml
+│   └── services/
+│       ├── kubesnap-svc.yaml
+│       └── kubesnap-ingress.yaml
 ├── src/
-│ ├── api/
-│ │ └── kubesnap.py # API entrypoint
-│ └── core/
-│ └── kubesnap_functions.py# Core logic for snapshots
+│   ├── api/
+│   │   └── kubesnap.py              # API entrypoint
+│   └── core/
+│       └── kubesnap_functions.py   # Core logic for snapshots
 └── .github/workflows/
-├── build.yml # CI build workflow
-└── deploy.yml # CD deployment workflow
+    ├── build.yml                   # CI build workflow
+    └── deploy.yml                  # CD deployment workflow
+
 
 # Installation
 
