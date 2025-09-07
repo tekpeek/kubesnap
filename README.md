@@ -29,9 +29,13 @@ It integrates smoothly with Kubernetes clusters and can be deployed as a contain
 ## 📂 Project Structure  
 
 kubesnap/
+
 ├── deploy_project.sh # Deployment helper script
+
 ├── dockerfiles/
+
 │ └── Dockerfile.kubesnap # Container build file
+
 ├── kubernetes/
 │ ├── deployments/
 │ │ └── kubesnap-deployment.yaml
@@ -56,8 +60,8 @@ kubesnap/
 - Clone the repository
 - Enter the kubesnap repository
 - In case you want to deploy kubesnap to a custom namespace, run the command
-    `export NAMESPACE="<CUSTOM-NAMESPACE>"`
+    - `export NAMESPACE="<CUSTOM-NAMESPACE>"`
 - Give execute permissions to the file
-    `chmod +x deploy_project.sh`
+    - `chmod +x deploy_project.sh`
 - Run the file
-    `./deploy_project.sh`
+    - `./deploy_project.sh`
