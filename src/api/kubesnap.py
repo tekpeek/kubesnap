@@ -55,8 +55,7 @@ def health_check():
     })
 
 @kubesnap.get("/api/kubesnap/{namespace}")
-async def create_snapshot_api(dep=Depends(api_key_auth),
-                             namespace) -> Dict[str, Any]:
+async def create_snapshot_api(namespace="default",dep=Depends(api_key_auth)) -> Dict[str, Any]:
     try:
         time_string = str(time.time())
         logger.info(f"Triggering Snapshot creation on request at {time_string}")
