@@ -10,6 +10,7 @@ log() {
 
 if [ -z $NAMESPACE ]; then
     export NAMESPACE="kubesnap"
+    log "setting namespace to $NAMESPACE"
 fi
 
 namespace_list=($(kubectl get ns -o json | jq -r .items[].metadata.name))
