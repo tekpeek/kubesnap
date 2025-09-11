@@ -55,7 +55,7 @@ def health_check():
     })
 
 @kubesnap.get("/api/kubesnap/{namespace}")
-async def create_snapshot_api(dep=Depends(api_key_auth)
+async def create_snapshot_api(dep=Depends(api_key_auth),
                              namespace) -> Dict[str, Any]:
     try:
         time_string = str(time.time())
